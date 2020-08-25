@@ -1,0 +1,250 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  6
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      snappyHexMeshDict;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+castellatedMesh true;
+snap            (|-agree-|);
+addLayers       false;
+
+geometry
+{
+    wall_aorta.stl
+    {
+        type triSurfaceMesh;
+        file "wall_aorta.stl";
+	name wall_aorta;
+    }
+	inlet.stl
+    {
+        type triSurfaceMesh;
+        file "inlet.stl";
+	name inlet;
+    }
+	outlet1.stl
+    {
+        type triSurfaceMesh;
+        file "outlet1.stl";
+	name outlet1;
+    }
+	outlet2.stl
+    {
+        type triSurfaceMesh;
+        file "outlet2.stl";
+	name outlet2;
+    }
+	outlet3.stl
+    {
+        type triSurfaceMesh;
+        file "outlet3.stl";
+	name outlet3;
+    }
+	outlet4.stl
+    {
+        type triSurfaceMesh;
+        file "outlet4.stl";
+	name outlet4;
+    }
+
+    //- Refine a bit extra around the small centre hole
+    /*refineHole
+    {
+        type searchableSphere;
+        centre (0 0 -0.012);
+        radius 0.003;
+    }*/
+};
+
+
+
+castellatedMeshControls
+{
+
+    maxLocalCells  3000000;
+
+    maxGlobalCells  5000000;
+
+    minRefinementCells 0;
+
+    nCellsBetweenLevels 1;
+
+    features
+    (
+        {
+            file "wall_aorta.eMesh";
+            level 4;    // original value is 2; 3 and 4even it change to 8, it has no effect of outlet
+        }
+        {
+            file "inlet.eMesh";
+            level 4;      //3 is good but the edge still have a bit problem; 4 and 5 both similar and not good;
+        }
+        {
+            file "outlet1.eMesh";
+            level 4;        //3 is good;4 is very good
+        }
+        {
+            file "outlet2.eMesh";
+            level 4;          //3 is good but the edge still have a bit problem; 4 is better but still has defeat of edge
+        }                     // 5 is good so far;
+        {
+            file "outlet3.eMesh";
+            level 4;            //3 is bad; 4 is better but the refinement is not same other patch with same value;
+        }                       // 5 is much better But with a small one edge problem;
+        {
+            file "outlet4.eMesh";
+            level 4;         //3 is bad; 4 is good, but same as outlet3; a small edge is not good;
+                             // 5 is much better But with a small one edge problem;
+                             // even in 8 it doesn't really help; if i put this to zero the middle part will be change;but edge is 
+        }                    // not effected
+
+    );
+
+
+    refinementSurfaces
+    {
+        wall_aorta
+        {
+            // Surface-wise min and max refinement level
+            level (4 4);
+        }
+        inlet
+        {
+            // Surface-wise min and max refinement level
+            level (4 4);
+        }
+        outlet1
+        {
+            // Surface-wise min and max refinement level
+            level (4 4);
+        }
+        outlet2
+        {
+            // Surface-wise min and max refinement level
+            level (4 4);
+        }
+        outlet3
+        {
+            // Surface-wise min and max refinement level
+            level (4 4);
+        }
+        outlet4
+        {
+            // Surface-wise min and max refinement level
+            level (4 4);     // (0 0) has effect especially of edge
+        }
+
+
+    }
+
+    resolveFeatureAngle 30;   // before it was 20
+
+    refinementRegions
+	{
+
+        }
+
+    locationInMesh (-2 193 -130); // Inside point
+
+    // Whether any faceZones (as specified in the refinementSurfaces)
+    // are only on the boundary of corresponding cellZones or also allow
+    // free-standing zone faces. Not used if there are no faceZones.
+    allowFreeStandingZoneFaces false;
+}
+
+snapControls
+{
+    nSmoothPatch 4;
+
+    tolerance 1.0;
+
+    nSolveIter 100;
+
+    nRelaxIter 5;
+
+        nFeatureSnapIter 10;
+
+        implicitFeatureSnap false;                 //it was false before I edit;
+
+        explicitFeatureSnap true;
+
+        multiRegionFeatureSnap false;
+}
+
+addLayersControls
+{
+    relativeSizes false;
+
+    layers
+    {
+        "wall_aorta.*"
+        {
+            nSurfaceLayers 1;
+        }
+    }
+
+    expansionRatio 1.2;
+
+    finalLayerThickness 0.02;
+
+    minThickness 0.0001;
+
+    nGrow 0;
+
+    featureAngle 60;
+
+    nRelaxIter 5;
+
+    nSmoothSurfaceNormals 1;
+
+    nSmoothNormals 3;
+
+    nSmoothThickness 10;
+
+    maxFaceThicknessRatio 0.5;
+
+    maxThicknessToMedialRatio 0.3;
+
+    minMedianAxisAngle 90;
+
+    nBufferCellsNoExtrude 0;
+
+    nLayerIter 50;
+
+    nRelaxedIter 20;
+}
+
+meshQualityControls
+{
+    #include "meshQualityDict"
+
+	minTriangleTwist -1;
+
+    relaxed
+    {
+        maxNonOrtho 75;
+    }
+}
+
+writeFlags
+(
+    scalarLevels    // write volScalarField with cellLevel for postprocessing
+    layerSets       // write cellSets, faceSets of faces in layer
+    layerFields     // write volScalarField for layer coverage
+);
+
+mergeTolerance 1E-6;
+
+
+// ************************************************************************* //
